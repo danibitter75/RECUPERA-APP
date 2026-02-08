@@ -31,7 +31,7 @@ st.set_page_config(page_title="Módulo 1: Extração e Importação", layout="wi
 st.title("👞 Auditoria de Calçados - Grupo 1")
 
 # Criação de abas para organizar as duas formas de entrada
-aba_xml, aba_excel, aba_pgdas = st.tabs(["📥 Processar XMLs", "📊 Importar Planilha (Excel/CSV)", "PGDAS"])
+aba_xml, aba_excel, aba_pgdas = st.tabs(["📥 Processar XML´s Avulsos", "📊 Importar XML´s por Planilha (Excel/CSV)", "PGDAS"])
 
 cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
