@@ -31,7 +31,7 @@ st.set_page_config(page_title="Módulo 1: Extração e Importação", layout="wi
 st.title("👞 Auditoria de Calçados - Grupo 1")
 
 # Criação de abas para organizar as duas formas de entrada
-aba_xml, aba_excel = st.tabs(["📥 Processar XMLs", "📊 Importar Planilha (Excel/CSV)"])
+aba_xml, aba_excel, aba_pgdas = st.tabs(["📥 Processar XMLs", "📊 Importar Planilha (Excel/CSV)", "PGDAS"])
 
 cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
@@ -98,6 +98,42 @@ with aba_excel:
             st.success("Planilha importada com sucesso!")
         except Exception as e:
             st.error(f"Erro ao ler planilha: {e}")
+
+#####################################
+
+# --- ABA 3: CONFRONTO COM O PGDAS ---
+with aba_pgdas:
+    st.subheader("📊 Diagnóstico de Recuperação (PGDAS-D)")
+    st.markdown("Insira os dados do extrato do Simples Nacional para comparar com os XMLs.")
+    
+    with st.form("calculo_auditoria"):
+        col1, col2 = st.columns(2)
+        # O que o contador declarou como ST no PGDAS
+        receita_st_pgdas = col1.number_input("Receita ST declarada no DAS (R$)", min_value=0.0)
+        aliquota = col2.number_input("Alíquota Efetiva do Mês (%)", value=8.5)
+        
+        # Escolha qual grupo de XML servirá de base (G1 ou G2)
+        origem = st.radio("Comparar DAS contra:", ["XML Grupo 1", "XML Grupo 2"])
+        
+        botao = st.form_submit_button("Gerar Diagnóstico")
+
+    if botao:
+        # Aqui o sistema pega o total que foi calculado lá nas abas 1 ou 2
+        # (Certifique-se que suas variáveis de total se chamam total_g1 e total_g2)
+        base_xml = total_g1 if origem == "XML Grupo 1" else total_g2
+        
+        diferenca = base_xml - receita_st_pgdas
+        
+        if diferenca > 0:
+            # Cálculo do ICMS (33.5% da fatia do Simples)
+            credito = (diferenca * (aliquota / 100)) * 0.335
+            
+            st.success(f"### 💰 Crédito Identificado: R$ {credito:,.2f}")
+            st.info(f"O contador deixou de segregar R$ {diferenca:,.2f} de faturamento ST.")
+        else:
+            st.warning("Nenhuma diferença encontrada. Os valores declarados batem com os XMLs.")
+            
+#################################################################
 
 # --- EXIBIÇÃO CONSOLIDADA DOS RESULTADOS ---
 st.markdown("---")
