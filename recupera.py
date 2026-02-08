@@ -2,6 +2,23 @@ import streamlit as st
 import pandas as pd
 import xml.etree.ElementTree as ET
 
+def check_password():
+    """Retorna True se o usuário inseriu a senha correta."""
+    if "password_correct" not in st.session_state:
+        st.text_input("Digite a senha da Consultoria", type="password", on_change=password_entered, key="password")
+        return False
+    return st.session_state["password_correct"]
+
+def password_entered():
+    if st.session_state["password"] == "SUA_SENHA_AQUI": # Defina sua senha
+        st.session_state["password_correct"] = True
+        del st.session_state["password"]
+    else:
+        st.session_state["password_correct"] = False
+
+if not check_password():
+    st.stop()  # Trava o app aqui se a senha estiver errada
+
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Consultoria Tributária CEA", layout="wide", page_icon="👞")
 
