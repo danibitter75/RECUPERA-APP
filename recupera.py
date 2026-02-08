@@ -2,22 +2,31 @@ import streamlit as st
 import pandas as pd
 import xml.etree.ElementTree as ET
 
+# --- 1. CONFIGURAÇÃO DE SEGURANÇA ---
 def check_password():
-    """Retorna True se o usuário inseriu a senha correta."""
+    """Retorna True se a senha estiver correta."""
+    def password_entered():
+        # ALTERE 'sua_senha_aqui' PARA A SENHA QUE VOCÊ DESEJAR
+        if st.session_state["password"] == "cea2024": 
+            st.session_state["password_correct"] = True
+            del st.session_state["password"] # Limpa a senha da memória
+        else:
+            st.session_state["password_correct"] = False
+
     if "password_correct" not in st.session_state:
-        st.text_input("Digite a senha da Consultoria", type="password", on_change=password_entered, key="password")
+        st.title("🔐 Acesso Restrito - Consultoria")
+        st.text_input("Por favor, insira a senha de acesso:", type="password", on_change=password_entered, key="password")
         return False
-    return st.session_state["password_correct"]
+    elif not st.session_state["password_correct"]:
+        st.title("🔐 Acesso Restrito - Consultoria")
+        st.text_input("Senha incorreta. Tente novamente:", type="password", on_change=password_entered, key="password")
+        st.error("Acesso negado.")
+        return False
+    return True
 
-def password_entered():
-    if st.session_state["password"] == "SUA_SENHA_AQUI": # Defina sua senha
-        st.session_state["password_correct"] = True
-        del st.session_state["password"]
-    else:
-        st.session_state["password_correct"] = False
-
+# Se a senha não estiver correta, o script para aqui
 if not check_password():
-    st.stop()  # Trava o app aqui se a senha estiver errada
+    st.stop()
 
 # 1. CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Consultoria Tributária CEA", layout="wide", page_icon="👞")
