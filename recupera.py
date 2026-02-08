@@ -58,7 +58,7 @@ if arquivos:
 #################################################
     
  # --- NOVO BLOCO DE PROCESSAMENTO MÓDULO 1 ---   
-    for arquivo in arquivos_xml:
+for arquivo in arquivos_xml:
     try:
         tree = ET.parse(arquivo)
         root = tree.getroot()
