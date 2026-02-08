@@ -107,6 +107,6 @@ if arquivos:
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button("Baixar Dados (CSV)", csv, "extração_xml.csv", "text/csv")
 else:
-    st.info("Aguardando upload dos arquivos para iniciar a varredura.")
+    st.info("Aguardando upload dos arquivos para iniciar a varredura."
 else:
     st.warning("Aguardando upload dos arquivos XML para processamento.")
