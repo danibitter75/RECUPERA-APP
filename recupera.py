@@ -55,39 +55,63 @@ if arquivos:
     # Lista de CFOPs de Indústria com ST (Onde está o dinheiro!)
     cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
-    for arq in arquivos:
-        try:
-            tree = ET.parse(arq)
-            root = tree.getroot()
-            ns = {'ns': 'http://www.portalfiscal.inf.br/nfe'}
+#################################################
+    
+ # --- NOVO BLOCO DE PROCESSAMENTO MÓDULO 1 ---   
+    for arquivo in arquivos_xml:
+    try:
+        tree = ET.parse(arquivo)
+        root = tree.getroot()
+        ns = {'ns': 'http://www.portalfiscal.inf.br/nfe'}
+        
+        # Dados da Nota
+        ide = root.find('.//ns:ide', ns)
+        n_nfe = ide.find('ns:nNF', ns).text
+        data_emi = ide.find('ns:dhEmi', ns).text[:10]
+        
+        # Dados do Emitente (Para confirmar se é o seu cliente)
+        emit = root.find('.//ns:emit/ns:xNome', ns).text
+
+        for det in root.findall('.//ns:det', ns):
+            prod = det.find('ns:prod', ns)
+            imposto = det.find('ns:imposto', ns)
             
-            # Cabeçalho da Nota
-            n_nfe = root.find('.//ns:ide/ns:nNF', ns).text
-            data_emissao = root.find('.//ns:ide/ns:dhEmi', ns).text[:10]
+            ncm = prod.find('ns:NCM', ns).text
+            cfop = prod.find('ns:CFOP', ns).text
+            v_prod = float(prod.find('ns:vProd', ns).text)
+            x_prod = prod.find('ns:xProd', ns).text
             
-            # Itens da Nota
-            for det in root.findall('.//ns:det', ns):
-                ncm = det.find('.//ns:prod/ns:NCM', ns).text
-                cfop = det.find('.//ns:prod/ns:CFOP', ns).text
-                v_prod = float(det.find('.//ns:prod/ns:vProd', ns).text)
-                desc_prod = det.find('.//ns:prod/ns:xProd', ns).text
-                
-                # Regra de Crédito: Somente CFOPs de ST
-                is_st = cfop in cfops_st
-                credito_estimado = (v_prod * (aliquota_simples/100) * (percentual_icms_no_simples/100)) if is_st else 0
-                
-                dados.append({
-                    "Data": data_emissao,
-                    "Nota": n_nfe,
-                    "Produto": desc_prod,
-                    "NCM": ncm,
-                    "CFOP": cfop,
-                    "Valor": v_prod,
-                    "Crédito": credito_estimado,
-                    "Status": "Recuperável" if is_st else "Tributação Normal"
-                })
-        except:
-            continue
+            # Buscando o CSOSN (Crucial para Simples Nacional)
+            # Ele fica dentro de ICMS / ICMSSN101, 102, 500, etc.
+            csosn = ""
+            for icms in imposto.findall('.//ns:CSOSN', ns):
+                csosn = icms.text
+
+            # LÓGICA DE AUDITORIA:
+            # 1. É calçado? (NCM começa com 64)
+            # 2. CFOP é de ST? (Inicia com 54 ou 64)
+            # 3. Foi tributado errado? (CFOP de ST mas CSOSN diferente de 500)
+            
+            e_calcado = ncm.startswith('64')
+            e_st = cfop in ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
+            alerta_erro = e_st and csosn != '500'
+
+            dados.append({
+                "Data": data_emi,
+                "Nota": n_nfe,
+                "Produto": x_prod,
+                "NCM": ncm,
+                "CFOP": cfop,
+                "CSOSN": csosn,
+                "Valor": v_prod,
+                "É Calçado?": "Sim" if e_calcado else "Não",
+                "Operação ST?": "Sim" if e_st else "Não",
+                "Possível Erro": "SIM" if alerta_erro else "Não"
+            })
+    except Exception as e:
+        st.error(f"Erro no XML {arquivo.name}: {e}")
+
+    ################################################
 
     df = pd.DataFrame(dados)
 
