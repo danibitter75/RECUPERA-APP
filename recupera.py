@@ -108,5 +108,3 @@ if arquivos:
         st.download_button("Baixar Dados (CSV)", csv, "extração_xml.csv", "text/csv")
 else:
     st.info("Aguardando upload dos arquivos para iniciar a varredura.")
-else:
-    st.warning("Aguardando upload dos arquivos XML para processamento.")
