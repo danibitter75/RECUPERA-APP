@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import xml.etree.ElementTree as ET
+import plotly.express as px # Biblioteca para gráficos bonitos
 
 # --- 1. CONFIGURAÇÃO DE SEGURANÇA ---
 def check_password():
@@ -28,95 +29,103 @@ def check_password():
 if not check_password():
     st.stop()
 
-# 1. CONFIGURAÇÃO DA PÁGINA
-st.set_page_config(page_title="Consultoria Tributária CEA", layout="wide", page_icon="👞")
+#######################################################
 
-# Estilização básica
-st.title("👞 Auditoria Digital: Indústria de Calçados")
-st.subheader("Recuperação de Créditos para Simples Nacional")
-st.markdown("---")
+# --- 2. CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(page_title="Auditoria Calçadista CEA", layout="wide")
+st.title("👞 Inteligência Tributária: Setor de Calçados")
 
-# 2. BARRA LATERAL (INPUTS DE CONSULTOR)
-st.sidebar.header("Parâmetros do Diagnóstico")
-aliquota_simples = st.sidebar.slider("Alíquota efetiva do Simples (%)", 4.0, 15.0, 8.5)
-selic_anual = st.sidebar.number_input("Taxa Selic atual (% a.a.)", value=11.25)
+# --- 3. BARRA LATERAL - PARÂMETROS ---
+st.sidebar.header("Configurações do Cliente")
+empresa = st.sidebar.text_input("Nome da Empresa", "Indústria de Calçados X")
+aliquota_simples = st.sidebar.slider("Alíquota Efetiva do Simples (%)", 4.0, 15.0, 8.5)
+percentual_icms_no_simples = 33.5 # Percentual médio de ICMS dentro da guia do Simples
 
-# 3. ÁREA DE UPLOAD
-st.info("Arraste os arquivos XML das Notas Fiscais de Saída dos últimos meses abaixo.")
-arquivos_xml = st.file_uploader("Upload de XMLs", accept_multiple_files=True, type=['xml'])
+st.sidebar.markdown("---")
+st.sidebar.header("Projeção Financeira")
+selic = st.sidebar.number_input("Selic Atual (% a.a.)", value=11.25)
 
-if arquivos_xml:
-    lista_itens = []
-    
-    # Lista de CFOPs comuns de Substituição Tributária (onde mora o crédito na indústria)
-    cfops_recuperaveis = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
+# --- 4. ÁREA DE UPLOAD ---
+st.markdown(f"### 📁 Diagnóstico: {empresa}")
+arquivos = st.file_uploader("Selecione os arquivos XML (Notas de Saída)", accept_multiple_files=True, type=['xml'])
 
-    for arquivo in arquivos_xml:
+# --- 5. PROCESSAMENTO LOGÍSTICO ---
+if arquivos:
+    dados = []
+    # Lista de CFOPs de Indústria com ST (Onde está o dinheiro!)
+    cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
+
+    for arq in arquivos:
         try:
-            tree = ET.parse(arquivo)
+            tree = ET.parse(arq)
             root = tree.getroot()
             ns = {'ns': 'http://www.portalfiscal.inf.br/nfe'}
             
+            # Cabeçalho da Nota
             n_nfe = root.find('.//ns:ide/ns:nNF', ns).text
+            data_emissao = root.find('.//ns:ide/ns:dhEmi', ns).text[:10]
             
+            # Itens da Nota
             for det in root.findall('.//ns:det', ns):
                 ncm = det.find('.//ns:prod/ns:NCM', ns).text
                 cfop = det.find('.//ns:prod/ns:CFOP', ns).text
-                valor = float(det.find('.//ns:prod/ns:vProd', ns).text)
+                v_prod = float(det.find('.//ns:prod/ns:vProd', ns).text)
+                desc_prod = det.find('.//ns:prod/ns:xProd', ns).text
                 
-                # Regra: Se for calçado (NCM 64) e CFOP de ST, marca como possível crédito
-                status = "Recuperável" if cfop in cfops_recuperaveis else "Tributado"
+                # Regra de Crédito: Somente CFOPs de ST
+                is_st = cfop in cfops_st
+                credito_estimado = (v_prod * (aliquota_simples/100) * (percentual_icms_no_simples/100)) if is_st else 0
                 
-                lista_itens.append({
+                dados.append({
+                    "Data": data_emissao,
                     "Nota": n_nfe,
+                    "Produto": desc_prod,
                     "NCM": ncm,
                     "CFOP": cfop,
-                    "Valor": valor,
-                    "Status": status
+                    "Valor": v_prod,
+                    "Crédito": credito_estimado,
+                    "Status": "Recuperável" if is_st else "Tributação Normal"
                 })
-        except Exception as e:
-            st.warning(f"Erro ao ler o arquivo {arquivo.name}")
+        except:
+            continue
 
-    # 4. PROCESSAMENTO DOS DADOS
-    df = pd.DataFrame(lista_itens)
-    df_recuperavel = df[df['Status'] == "Recuperável"]
-    
+    df = pd.DataFrame(dados)
+
+    # --- 6. DASHBOARD DE RESULTADOS ---
     total_faturado = df['Valor'].sum()
-    total_recuperavel = df_recuperavel['Valor'].sum()
+    total_credito = df['Crédito'].sum()
     
-    # Estimativa de Crédito (Simplificada: parcela de ICMS dentro do Simples)
-    # Geralmente o ICMS representa cerca de 33.5% da guia do Simples na Indústria
-    estimativa_credito = (total_recuperavel * (aliquota_simples / 100)) * 0.335
-
-    # 5. DASHBOARD EXECUTIVO (AQUI VOCÊ BRILHA COMO CEA)
-    st.markdown("### 📊 Resultado do Diagnóstico")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Faturamento Analisado", f"R$ {total_faturado:,.2f}")
+    col2.metric("Crédito Total Identificado", f"R$ {total_credito:,.2f}", delta="Cashback Fiscal")
     
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Faturamento Total Analisado", f"R$ {total_faturado:,.2f}")
-    c2.metric("Base de Crédito (ST)", f"R$ {total_recuperavel:,.2f}")
-    c3.metric("Crédito Estimado (Cashback)", f"R$ {estimativa_credito:,.2f}", delta="Recuperável")
+    # Visão CEA: Valorização
+    valor_futuro = total_credito * (1 + (selic/100))
+    col3.metric("Valor c/ Selic (12 meses)", f"R$ {valor_futuro:,.2f}")
 
+    # --- 7. GRÁFICOS ---
     st.markdown("---")
+    c_left, c_right = st.columns(2)
     
-    # 6. VISÃO FINANCEIRA E INVESTIMENTO
-    st.subheader("📈 Projeção de Valorização (Visão CEA)")
-    col_inv1, col_inv2 = st.columns(2)
-    
-    valor_com_selic = estimativa_credito * (1 + (selic_anual/100))
-    
-    with col_inv1:
-        st.write(f"Se este valor de **R$ {estimativa_credito:,.2f}** for recuperado e aplicado na Selic atual:")
-        st.info(f"**Valor após 12 meses:** R$ {valor_com_selic:,.2f}")
-    
-    with col_inv2:
-        st.bar_chart(pd.DataFrame({
-            "Cenários": ["Crédito Inicial", "Crédito + Selic (1 ano)"],
-            "Valores": [estimativa_credito, valor_com_selic]
-        }).set_index("Cenários"))
+    with c_left:
+        st.subheader("Concentração por CFOP")
+        fig_cfop = px.pie(df, values='Valor', names='CFOP', hole=.3)
+        st.plotly_chart(fig_cfop, use_container_width=True)
+        
+    with c_right:
+        st.subheader("Top 5 NCMs por Faturamento")
+        top_ncm = df.groupby('NCM')['Valor'].sum().nlargest(5).reset_index()
+        fig_ncm = px.bar(top_ncm, x='NCM', y='Valor', color='NCM')
+        st.plotly_chart(fig_ncm, use_container_width=True)
 
-    # 7. TABELA DETALHADA
-    with st.expander("Ver detalhes das notas analisadas"):
-        st.dataframe(df)
+    # --- 8. EXPORTAÇÃO ---
+    st.markdown("### 📄 Relatório Detalhado")
+    st.dataframe(df.style.format({"Valor": "R$ {:.2f}", "Crédito": "R$ {:.2f}"}))
+    
+    # Botão para baixar Excel
+    df.to_excel("diagnostico_fiscal.xlsx", index=False)
+    with open("diagnostico_fiscal.xlsx", "rb") as f:
+        st.download_button("Baixar Relatório em Excel", f, file_name=f"auditoria_{empresa}.xlsx")
 
 else:
-    st.warning("Aguardando upload de arquivos para iniciar o diagnóstico.")
+    st.warning("Aguardando upload dos arquivos XML para processamento.")
