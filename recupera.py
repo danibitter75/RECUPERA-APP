@@ -70,13 +70,10 @@ st.title("Auditoria Para Recuperação de Créditos Tributários para Calçados 
 # --- BOTÃO PARA ZERAR TUDO ---
 st.sidebar.markdown("---")
 if st.sidebar.button("♻️ Reiniciar Análise do Zero", use_container_width=True):
-    # Limpa as variáveis de valores
-    st.session_state.total_g1 = 0.0
-    st.session_state.total_g2 = 0.0
-    st.session_state.res_final = None
-    # Força o recarregamento da página para limpar os uploads da tela
+    for key in st.session_state.keys():
+        del st.session_state[key]
     st.rerun()
-
+    
 # --- 4. ESTRUTURA DE ABAS ---
 aba1, aba2, aba3 = st.tabs(["📥 XML´s Avulsos", "📊 XML´s de Excel/CSV", "📄 PGDAS & Relatório"])
 
@@ -169,6 +166,10 @@ with aba3:
         st.markdown("---")
         st.subheader("Resultado do Diagnóstico")
         c1, c2, c3 = st.columns(3)
+
+        valor_dif = res.get('dif', 0.0)
+        valor_cred = res.get('cred', 0.0)
+        
         c1.metric("Diferença Base", f"R$ {res['dif']:,.2f}")
         c2.metric("Alíquota ICMS", "33.5% (do Simples)")
         c3.metric("Crédito Estimado", f"R$ {res['cred']:,.2f}")
