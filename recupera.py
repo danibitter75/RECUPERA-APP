@@ -30,7 +30,7 @@ if not check_password():
     st.stop()
 
 
-###########################################
+##########################################
 
 # --- 2. CONFIGURAÇÃO INICIAL ---
 st.set_page_config(page_title="Módulo 1: Extração e Importação", layout="wide")
