@@ -65,10 +65,10 @@ if senha != "cea2024":
 empresa = st.sidebar.text_input("Nome da Empresa", value="Empresa Exemplo")
 cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
-st.title("👞 Auditoria de Calçados - Recuperação de ICMS")
+st.title("Auditoria Para Recuperação de Créditos Tributários para Calçados - Recuperação de ICMS")
 
 # --- 4. ESTRUTURA DE ABAS ---
-aba1, aba2, aba3 = st.tabs(["📥 XMLs Avulsos", "📊 Excel/CSV", "📄 PGDAS & Relatório"])
+aba1, aba2, aba3 = st.tabs(["📥 XML´s Avulsos", "📊 XML´s de Excel/CSV", "📄 PGDAS & Relatório"])
 
 # --- ABA 1: XMLS AVULSOS ---
 with aba1:
