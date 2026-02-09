@@ -3,6 +3,12 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import plotly.express as px
 
+# Inicializa as variáveis de memória se elas não existirem
+if 'total_g1' not in st.session_state:
+    st.session_state.total_g1 = 0.0
+if 'total_g2' not in st.session_state:
+    st.session_state.total_g2 = 0.0
+
 # --- 1. SEGURANÇA ---
 def check_password():
     def password_entered():
