@@ -116,14 +116,12 @@ with aba2:
 # --- ABA 3: PGDAS E PDF ---
 with aba3:
     st.header("Confronto PGDAS")
-
     
-    soma_conciliada = st.session_state.total_g1 + st.session_state.total_g2
-    
+    soma_conciliada = st.session_state.total_g1 + st.session_state.total_g2    
     base_xml = st.radio("Selecione a base de cálculo:", 
                         [f"Grupo 1 (XMLs): R$ {st.session_state.total_g1:,.2f}", 
                          f"Grupo 2 (Planilha): R$ {st.session_state.total_g2:,.2f}",
-                         f"CONCILIADO (Soma Aba 1 + Aba 2): R$ {soma_conciliada:,.2f}"])
+                         f"CONCILIADO (Soma Grupo 1 + Grupo 2): R$ {soma_conciliada:,.2f}"])
 
     # Lógica de seleção de valor base incluindo a soma
     if "Grupo 1" in base_xml:
