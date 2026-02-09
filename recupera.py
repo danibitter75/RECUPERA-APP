@@ -117,20 +117,6 @@ with aba2:
 with aba3:
     st.header("Confronto PGDAS")
 
-# KPIs de Topo
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Total Identificado", f"R$ {valor_base:,.2f}")
-    c2.metric("Base Declarada", f"R$ {pgdas_declarado:,.2f}", delta=f"R$ {valor_base - pgdas_declarado:,.2f}", delta_color="inverse")
-    c3.metric("Recuperação Estimada", f"R$ {credito:,.2f}", help="Cálculo baseado em ICMS-ST e Alíquota Efetiva")
-
-    # Gráfico de Comparação (Plotly)
-    df_grafico = pd.DataFrame({
-        'Categoria': ['Identificado (XML)', 'Declarado (PGDAS)'],
-        'Valores': [valor_base, pgdas_declarado]
-    })
-    fig = px.bar(df_grafico, x='Categoria', y='Valores', color='Categoria', 
-                 title="Confronto de Bases Tributárias", color_discrete_sequence=['#00CC96', '#EF553B'])
-    st.plotly_chart(fig, use_container_width=True)
     
     soma_conciliada = st.session_state.total_g1 + st.session_state.total_g2
     
