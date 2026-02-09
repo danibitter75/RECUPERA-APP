@@ -166,10 +166,7 @@ with aba3:
         st.markdown("---")
         st.subheader("Resultado do Diagnóstico")
         c1, c2, c3 = st.columns(3)
-
-        valor_dif = res.get('dif', 0.0)
-        valor_cred = res.get('cred', 0.0)
-        
+     
         c1.metric("Diferença Base", f"R$ {res['dif']:,.2f}")
         c2.metric("Alíquota ICMS", "33.5% (do Simples)")
         c3.metric("Crédito Estimado", f"R$ {res['cred']:,.2f}")
