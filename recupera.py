@@ -164,8 +164,7 @@ with aba3:
         c3.metric("Crédito Estimado", f"R$ {res['cred']:,.2f}")
         
         # Gerar o PDF
-        pdf_bytes = gerar_pdf(empresa, res['base'], res['pgdas'], res['dif'], res['cred'], res['aliq'])
-        
+        pdf_bytes = gerar_pdf(empresa, res['base'], res['pgdas'], res['dif'], res['cred'], res['aliq'])        
         st.download_button(
             label="📥 Baixar Relatório em PDF",
             data=pdf_bytes,
