@@ -117,7 +117,7 @@ with aba2:
 with aba3:
     st.header("Confronto PGDAS")
 
-KPIs de Topo
+# KPIs de Topo
     c1, c2, c3 = st.columns(3)
     c1.metric("Total Identificado", f"R$ {valor_base:,.2f}")
     c2.metric("Base Declarada", f"R$ {pgdas_declarado:,.2f}", delta=f"R$ {valor_base - pgdas_declarado:,.2f}", delta_color="inverse")
