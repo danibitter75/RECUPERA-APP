@@ -4,6 +4,9 @@ import xml.etree.ElementTree as ET
 import plotly.express as px
 from fpdf import FPDF
 
+if 'restart_count' not in st.session_state:
+    st.session_state.restart_count = 0
+
 # --- 1. CONFIGURAÇÃO DA PÁGINA E ESTADO ---
 st.set_page_config(page_title="Auditoria Fiscal - Calçados", layout="wide")
 
@@ -66,15 +69,13 @@ empresa = st.sidebar.text_input("Nome da Empresa", value="Empresa Exemplo")
 ################################
 
 # --- BOTÃO PARA ZERAR APENAS A ANÁLISE ---
-st.sidebar.markdown("---")
 if st.sidebar.button("♻️ Reiniciar Análise", use_container_width=True):
-    # Limpa especificamente os dados acumulados
     st.session_state.total_g1 = 0.0
     st.session_state.total_g2 = 0.0
     st.session_state.res_final = None
     st.session_state.calculo_realizado = False
-    
-    # Força a atualização da página para limpar campos de upload
+    # Isso aqui vai "mudar o nome" dos campos de upload, forçando-os a ficarem vazios:
+    st.session_state.restart_count += 1 
     st.rerun()
 
 #####################################
@@ -88,7 +89,7 @@ aba1, aba2, aba3 = st.tabs(["📥 XML´s Avulsos", "📊 XML´s de Excel/CSV", "
 # --- ABA 1: XMLS AVULSOS ---
 with aba1:
     st.header("Upload de XMLs de Venda")
-    arquivos_xml = st.file_uploader("Selecione os arquivos XML", type="xml", accept_multiple_files=True)
+    arquivos_xml = st.file_uploader("Selecione os arquivos XML", type="xml", accept_multiple_files=True, key=f"xml_up_{st.session_state.restart_count}")
     
     if arquivos_xml:
         soma_g1 = 0.0
@@ -110,7 +111,7 @@ with aba1:
 # --- ABA 2: EXCEL / CSV ---
 with aba2:
     st.header("Importação por Planilha")
-    arquivo_planilha = st.file_uploader("Selecione a planilha", type=["xlsx", "csv"])
+    arquivo_planilha = st.file_uploader("Selecione a planilha", type=["xlsx", "csv"], key=f"xlsx_up_{st.session_state.restart_count}")
     
     if arquivo_planilha:
         try:
