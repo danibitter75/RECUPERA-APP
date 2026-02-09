@@ -67,6 +67,16 @@ cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
 st.title("Auditoria Para Recuperação de Créditos Tributários para Calçados - Recuperação de ICMS")
 
+# --- BOTÃO PARA ZERAR TUDO ---
+st.sidebar.markdown("---")
+if st.sidebar.button("♻️ Reiniciar Análise do Zero", use_container_width=True):
+    # Limpa as variáveis de valores
+    st.session_state.total_g1 = 0.0
+    st.session_state.total_g2 = 0.0
+    st.session_state.res_final = None
+    # Força o recarregamento da página para limpar os uploads da tela
+    st.rerun()
+
 # --- 4. ESTRUTURA DE ABAS ---
 aba1, aba2, aba3 = st.tabs(["📥 XML´s Avulsos", "📊 XML´s de Excel/CSV", "📄 PGDAS & Relatório"])
 
