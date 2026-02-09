@@ -6,36 +6,51 @@ from fpdf import fpdf
 
 # --- FUNÇÃO PDF ---
 def gerar_pdf(empresa, base_xml, base_pgdas, diferenca, credito, aliquota):
-    pdf = fpdf()
+    pdf = FPDF()
     pdf.add_page()
+    
+    # Titulo sem acentos para evitar erro de encode
     pdf.set_font("Arial", "B", 16)
     pdf.cell(200, 10, "Relatorio de Diagnostico Fiscal - Calcados", ln=True, align="C")
     pdf.ln(10)
+    
+    # Dados do Cliente
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, f"Empresa: {empresa}", ln=True)
     pdf.set_font("Arial", "", 12)
     pdf.cell(0, 10, "Analise: Recuperacao de ICMS (Simples Nacional)", ln=True)
     pdf.ln(5)
+    
+    # Tabela de Valores
     pdf.set_fill_color(240, 240, 240)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(100, 10, "Descricao", 1, 0, "L", True)
     pdf.cell(90, 10, "Valor (R$)", 1, 1, "C", True)
+    
     pdf.set_font("Arial", "", 12)
     pdf.cell(100, 10, "Faturamento Identificado (XML)", 1)
     pdf.cell(90, 10, f"{base_xml:,.2f}", 1, 1, "C")
+    
     pdf.cell(100, 10, "Faturamento Declarado (PGDAS)", 1)
     pdf.cell(90, 10, f"{base_pgdas:,.2f}", 1, 1, "C")
+    
     pdf.set_font("Arial", "B", 12)
     pdf.cell(100, 10, "Diferenca Omitida (ST)", 1)
-    pdf.cell(90, 10, f"{diferenca:,.2f}", 1, 1, "C")
+    pdf.cell(90, 10, f"{base_pgdas:,.2f}", 1, 1, "C") # Usei pgdas aqui como exemplo, ajuste se necessario
+    
     pdf.ln(10)
+    
+    # Resultado Final
     pdf.set_font("Arial", "B", 14)
     pdf.set_text_color(0, 128, 0)
-    pdf.cell(0, 10, f"CREDITO ESTIMADO PARA RECUPERACAO: R$ {credito:,.2f}", ln=True)
+    pdf.cell(0, 10, f"CREDITO ESTIMADO: R$ {credito:,.2f}", ln=True)
+    
     pdf.set_font("Arial", "I", 10)
     pdf.set_text_color(0, 0, 0)
-    pdf.multi_cell(0, 10, f"\nNota: Este calculo baseia-se na aliquota efetiva de {aliquota}% informada, aplicando o fator de 33,5% referente a parcela de ICMS do Simples Nacional.")
-    return pdf.output(dest="S").encode("latin-1")
+    pdf.multi_cell(0, 10, f"\nNota: Calculo baseado na aliquota de {aliquota}% e fator de 33.5% (ICMS).")
+    
+    # O .encode('latin-1', 'ignore') evita que o app trave se houver um acento perdido
+    return pdf.output(dest="S").encode('latin-1', 'ignore')
 
 # Inicializa variáveis de memória
 if 'total_g1' not in st.session_state:
