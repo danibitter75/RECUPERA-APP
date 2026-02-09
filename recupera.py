@@ -154,14 +154,21 @@ with aba3:
             st.session_state.calculo_realizado = False
 
     # Exibição do Resultado e Botão de PDF
-    if st.session_state.calculo_realizado:
-        res = st.session_state.res_final
-        st.markdown("---")
-        st.subheader("Resultado do Diagnóstico")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Diferença Base", f"R$ {res['dif']:,.2f}")
-        c2.metric("Alíquota ICMS", "33.5% (do Simples)")
-        c3.metric("Crédito Estimado", f"R$ {res['cred']:,.2f}")
+if st.session_state.get('calculo_realizado') and st.session_state.get('res_final'):
+    res = st.session_state.res_final
+    st.markdown("---")
+    st.subheader("Resultado do Diagnóstico")
+    
+    c1, c2, c3 = st.columns(3)
+    
+    # Usamos .get() para evitar o erro de 'chave não encontrada'
+    valor_dif = res.get('dif', 0.0)
+    valor_cred = res.get('cred', 0.0)
+    valor_aliq = res.get('aliq', 0.0)
+    
+    c1.metric("Diferença Base", f"R$ {valor_dif:,.2f}")
+    c2.metric("Alíquota ICMS", "33.5% (do Simples)")
+    c3.metric("Crédito Estimado", f"R$ {valor_cred:,.2f}")
         
         # Gerar o PDF
         pdf_bytes = gerar_pdf(empresa, res['base'], res['pgdas'], res['dif'], res['cred'], res['aliq'])        
