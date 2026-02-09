@@ -3,6 +3,54 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import plotly.express as px
 
+from fpdf import FPDF
+
+def gerar_pdf(empresa, base_xml, base_pgdas, diferenca, credito, aliquota):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Cabeçalho
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(200, 10, "Relatorio de Diagnostico Fiscal - Calçados", ln=True, align="C")
+    pdf.ln(10)
+    
+    # Dados do Cliente
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, f"Empresa: {empresa}", ln=True)
+    pdf.set_font("Arial", "", 12)
+    pdf.cell(0, 10, f"Analise: Recuperacao de ICMS (Simples Nacional)", ln=True)
+    pdf.ln(5)
+    
+    # Tabela de Valores
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(100, 10, "Descricao", 1, 0, "L", True)
+    pdf.cell(90, 10, "Valor (R$)", 1, 1, "C", True)
+    
+    pdf.set_font("Arial", "", 12)
+    pdf.cell(100, 10, "Faturamento Identificado (XML)", 1)
+    pdf.cell(90, 10, f"{base_xml:,.2f}", 1, 1, "C")
+    
+    pdf.cell(100, 10, "Faturamento Declarado (PGDAS)", 1)
+    pdf.cell(90, 10, f"{base_pgdas:,.2f}", 1, 1, "C")
+    
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(100, 10, "Diferenca Omitida (ST)", 1)
+    pdf.cell(90, 10, f"{diferenca:,.2f}", 1, 1, "C")
+    
+    pdf.ln(10)
+    
+    # Resultado Final
+    pdf.set_font("Arial", "B", 14)
+    pdf.set_text_color(0, 128, 0)
+    pdf.cell(0, 10, f"CREDITO ESTIMADO PARA RECUPERACAO: R$ {credito:,.2f}", ln=True)
+    
+    pdf.set_font("Arial", "I", 10)
+    pdf.set_text_color(0, 0, 0)
+    pdf.multi_cell(0, 10, f"\nNota: Este calculo baseia-se na aliquota efetiva de {aliquota}% informada, aplicando o fator de 33,5% referente a parcela de ICMS do Simples Nacional.")
+    
+    return pdf.output(dest="S").encode("latin-1")
+
 # Inicializa as variáveis de memória se elas não existirem
 if 'total_g1' not in st.session_state:
     st.session_state.total_g1 = 0.0
@@ -157,6 +205,23 @@ with aba_pgdas:
                 st.balloons()
             else:
                 st.error("❌ A base declarada no PGDAS é maior ou igual aos XMLs. Não há crédito identificado.")
+                # ... (abaixo do st.balloons())
+                
+                pdf_data = gerar_pdf(
+                    empresa, 
+                    base_escolhida, 
+                    valor_pgdas_st, 
+                    diferenca_base, 
+                    credito_final, 
+                    aliquota_simples
+                )
+                
+                st.download_button(
+                    label="📥 Baixar Relatório em PDF",
+                    data=pdf_data,
+                    file_name=f"Relatorio_Auditoria_{empresa}.pdf",
+                    mime="application/pdf"
+                )
             
 #################################################################
 
