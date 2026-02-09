@@ -79,6 +79,8 @@ with aba_xml:
             except Exception as e:
                 st.error(f"Erro no XML {arquivo.name}: {e}")
 
+                st.session_state.total_g1 = soma_dos_valores
+
 # --- ABA 2: IMPORTAÇÃO DE EXCEL ---
 with aba_excel:
     st.markdown("### Importar Relatório de Itens (ERP)")
@@ -104,6 +106,8 @@ with aba_excel:
             st.success("Planilha importada com sucesso!")
         except Exception as e:
             st.error(f"Erro ao ler planilha: {e}")
+            
+            st.session_state.total_g2 = soma_dos_valores
 
 #####################################
 
