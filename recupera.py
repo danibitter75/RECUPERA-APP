@@ -63,6 +63,21 @@ if senha != "cea2024":
     st.stop()
 
 empresa = st.sidebar.text_input("Nome da Empresa", value="Empresa Exemplo")
+################################
+
+# --- BOTÃO PARA ZERAR APENAS A ANÁLISE ---
+st.sidebar.markdown("---")
+if st.sidebar.button("♻️ Reiniciar Análise", use_container_width=True):
+    # Limpa especificamente os dados acumulados
+    st.session_state.total_g1 = 0.0
+    st.session_state.total_g2 = 0.0
+    st.session_state.res_final = None
+    st.session_state.calculo_realizado = False
+    
+    # Força a atualização da página para limpar campos de upload
+    st.rerun()
+
+#####################################
 cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
 st.title("Auditoria Para Recuperação de Créditos Tributários para Calçados - Recuperação de ICMS")
