@@ -113,35 +113,50 @@ with aba_excel:
 
 # --- ABA 3: CONFRONTO COM O PGDAS ---
 with aba_pgdas:
-    st.subheader("📊 Diagnóstico de Recuperação (PGDAS-D)")
-    st.markdown("Insira os dados do extrato do Simples Nacional para comparar com os XMLs.")
+    st.header("📊 Cálculo de Recuperação Tributária")
     
-    with st.form("calculo_auditoria"):
-        col1, col2 = st.columns(2)
-        # O que o contador declarou como ST no PGDAS
-        receita_st_pgdas = col1.number_input("Receita ST declarada no DAS (R$)", min_value=0.0)
-        aliquota = col2.number_input("Alíquota Efetiva do Mês (%)", value=8.5)
-        
-        # Escolha qual grupo de XML servirá de base (G1 ou G2)
-        origem = st.radio("Comparar DAS contra:", ["XML Grupo 1", "XML Grupo 2"])
-        
-        botao = st.form_submit_button("Gerar Diagnóstico")
+    # Verificação de segurança: Só calcula se houver dados nas abas anteriores
+    g1_disponivel = st.session_state.get('total_g1', 0.0)
+    g2_disponivel = st.session_state.get('total_g2', 0.0)
 
-    if botao:
-        # Aqui o sistema pega o total que foi calculado lá nas abas 1 ou 2
-        # (Certifique-se que suas variáveis de total se chamam total_g1 e total_g2)
-        base_xml = total_g1 if origem == "XML Grupo 1" else total_g2
-        
-        diferenca = base_xml - receita_st_pgdas
-        
-        if diferenca > 0:
-            # Cálculo do ICMS (33.5% da fatia do Simples)
-            credito = (diferenca * (aliquota / 100)) * 0.335
+    if g1_disponivel == 0 and g2_disponivel == 0:
+        st.warning("⚠️ Nenhum dado de XML foi processado nas Abas 1 ou 2 ainda.")
+    else:
+        with st.container(border=True):
+            st.markdown("### 📝 Dados do Confronto")
             
-            st.success(f"### 💰 Crédito Identificado: R$ {credito:,.2f}")
-            st.info(f"O contador deixou de segregar R$ {diferenca:,.2f} de faturamento ST.")
-        else:
-            st.warning("Nenhuma diferença encontrada. Os valores declarados batem com os XMLs.")
+            # 1. Seleção da Base de Cálculo
+            origem = st.radio("Qual base de XML deseja utilizar?", ["Grupo 1", "Grupo 2"], horizontal=True)
+            base_escolhida = g1_disponivel if origem == "Grupo 1" else g2_disponivel
+            
+            st.info(f"Base de XML selecionada ({origem}): **R$ {base_escolhida:,.2f}**")
+
+            # 2. Entrada de dados manuais (PGDAS)
+            col1, col2 = st.columns(2)
+            valor_pgdas_st = col1.number_input("Valor de ST já declarado no PGDAS (R$)", min_value=0.0, format="%.2f")
+            aliquota_simples = col2.number_input("Alíquota Efetiva do Simples (%)", min_value=0.0, value=8.5, step=0.1)
+
+        # 3. O CÁLCULO (A regra CEA)
+        if st.button("🚀 Calcular Crédito Recuperável"):
+            diferenca_base = base_escolhida - valor_pgdas_st
+            
+            if diferenca_base > 0:
+                # Cálculo: (Base Escondida * Alíquota Simples) * 33.5% (Fatia ICMS)
+                # Usando LaTeX para formalizar a ciência por trás do cálculo
+                st.latex(r"Crédito = (Base_{XML} - Base_{PGDAS}) \cdot \frac{Alíquota}{100} \cdot 0.335")
+                
+                credito_final = (diferenca_base * (aliquota_simples / 100)) * 0.335
+                
+                # Exibição do Resultado Estilizado
+                st.markdown("---")
+                c1, c2 = st.columns(2)
+                c1.metric("Diferença de Faturamento ST", f"R$ {diferenca_base:,.2f}")
+                c2.metric("Crédito de ICMS Estimado", f"R$ {credito_final:,.2f}", delta="Recuperável")
+                
+                st.success(f"💰 O valor estimado para recuperação é de **R$ {credito_final:,.2f}**")
+                st.balloons()
+            else:
+                st.error("❌ A base declarada no PGDAS é maior ou igual aos XMLs. Não há crédito identificado.")
             
 #################################################################
 
