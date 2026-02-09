@@ -132,8 +132,11 @@ with aba_excel:
             st.error(f"Erro ao ler planilha: {e}")
 
 # --- ABA 3: PGDAS (CORRIGIDA PARA O PDF APARECER) ---
+# --- ABA 3: PGDAS (VERSÃO FINAL COM FIX DO PDF) ---
 with aba_pgdas:
     st.header("📊 Cálculo de Recuperação Tributária")
+    
+    # Busca os totais salvos nas abas 1 e 2
     g1_disponivel = st.session_state.get('total_g1', 0.0)
     g2_disponivel = st.session_state.get('total_g2', 0.0)
 
@@ -141,46 +144,48 @@ with aba_pgdas:
         st.warning("⚠️ Nenhum dado de XML foi processado nas Abas 1 ou 2 ainda.")
     else:
         with st.container(border=True):
+            st.markdown("### 📝 Dados do Confronto")
             origem = st.radio("Qual base de XML deseja utilizar?", ["Grupo 1", "Grupo 2"], horizontal=True)
             base_escolhida = g1_disponivel if origem == "Grupo 1" else g2_disponivel
-            st.info(f"Base de XML selecionada ({origem}): **R$ {base_escolhida:,.2f}**")
             
+            st.info(f"Base de XML selecionada: **R$ {base_escolhida:,.2f}**")
+
             col1, col2 = st.columns(2)
-            valor_pgdas_st = col1.number_input("Valor de ST já declarado no PGDAS (R$)", min_value=0.0, format="%.2f")
-            aliquota_simples = col2.number_input("Alíquota Efetiva do Simples (%)", min_value=0.0, value=8.5, step=0.1)
+            valor_pgdas_st = col1.number_input("Valor de ST já declarado no PGDAS (R$)", min_value=0.0, format="%.2f", key="pgdas_val")
+            aliquota_simples = col2.number_input("Alíquota Efetiva do Simples (%)", min_value=0.0, value=8.5, step=0.1, key="aliq_val")
 
-        # Botão de Calcular
-        calcular = st.button("🚀 Calcular Crédito Recuperável")
-
-        # Lógica para manter o resultado na tela e mostrar o PDF
-        if calcular or st.session_state.get('calculo_feito', False):
+        # BOTÃO DE CÁLCULO
+        if st.button("🚀 Calcular Crédito Recuperável"):
             diferenca_base = base_escolhida - valor_pgdas_st
             
             if diferenca_base > 0:
                 credito_final = (diferenca_base * (aliquota_simples / 100)) * 0.335
-                st.session_state.calculo_feito = True # Salva que o cálculo foi feito
                 
+                # Exibe os resultados na tela
                 st.markdown("---")
                 c1, c2 = st.columns(2)
                 c1.metric("Diferença de Faturamento ST", f"R$ {diferenca_base:,.2f}")
                 c2.metric("Crédito de ICMS Estimado", f"R$ {credito_final:,.2f}")
-                
                 st.success(f"💰 Valor estimado para recuperação: **R$ {credito_final:,.2f}**")
-
-                # GERAR E MOSTRAR O BOTÃO DE PDF
+                
+                # GERAÇÃO DO PDF IMEDIATA
                 try:
+                    # O segredo: Geramos o PDF e já oferecemos o download no mesmo bloco
                     pdf_data = gerar_pdf(empresa, base_escolhida, valor_pgdas_st, diferenca_base, credito_final, aliquota_simples)
+                    
                     st.download_button(
                         label="📥 Baixar Relatório em PDF",
                         data=pdf_data,
                         file_name=f"Relatorio_{empresa.replace(' ', '_')}.pdf",
-                        mime="application/pdf"
+                        mime="application/pdf",
+                        key="btn_pdf_download"
                     )
+                    st.balloons()
                 except Exception as e:
-                    st.error(f"Erro ao gerar PDF: {e}. Certifique-se de que a biblioteca fpdf está instalada.")
+                    st.error(f"Erro técnico ao gerar PDF: {e}")
+                    st.info("Dica: Verifique se 'fpdf' está no seu arquivo requirements.txt")
             else:
-                st.error("❌ A base declarada no PGDAS é maior ou igual aos XMLs.")
-
+                st.error("❌ A base declarada no PGDAS é maior ou igual aos XMLs. Não há crédito.")
 # --- RESULTADOS CONSOLIDADOS ---
 st.markdown("---")
 if lista_final:
