@@ -164,3 +164,21 @@ with aba3:
             file_name=f"Relatorio_{empresa.replace(' ', '_')}.pdf",
             mime="application/pdf"
         )
+# --- BOTÃO TEMPORÁRIO PARA GERAR PLANILHA DE TESTE ---
+st.sidebar.markdown("---")
+if st.sidebar.button("🛠️ Gerar Planilha de Teste"):
+    data_teste = {
+        'DATA': ['01/01/2024', '02/01/2024', '03/01/2024', '04/01/2024'],
+        'NOTA': [101, 102, 103, 104],
+        'CFOP': [5405, 5102, 5405, 6404],  # 5405 e 6404 são ST
+        'VALOR': [1500.00, 2000.00, 3500.00, 5000.00],
+        'PRODUTO': ['Tenis Esportivo', 'Meia Algodao', 'Sapato Couro', 'Bota Feminina']
+    }
+    df_teste = pd.DataFrame(data_teste)
+    csv_teste = df_teste.to_csv(index=False).encode('utf-8')
+    st.sidebar.download_button(
+        label="📥 Baixar Planilha_Teste.csv",
+        data=csv_teste,
+        file_name="planilha_teste_auditoria.csv",
+        mime="text/csv"
+    )
