@@ -172,7 +172,7 @@ if st.session_state.get('calculo_realizado') and st.session_state.get('res_final
         
     # Gerar o PDF
     pdf_bytes = gerar_pdf(empresa, res['base'], res['pgdas'], res['dif'], res['cred'], res['aliq'])        
-     st.download_button(
+    st.download_button(
          label="📥 Baixar Relatório em PDF",
          data=pdf_bytes,
           file_name=f"Relatorio_{empresa.replace(' ', '_')}.pdf",
