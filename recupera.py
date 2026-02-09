@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import xml.etree.ElementTree as ET
 import plotly.express as px
-from fpdf import FPDF
+from fpdf import fpdf
 
 # --- FUNÇÃO PDF ---
 def gerar_pdf(empresa, base_xml, base_pgdas, diferenca, credito, aliquota):
-    pdf = FPDF()
+    pdf = fpdf()
     pdf.add_page()
     pdf.set_font("Arial", "B", 16)
     pdf.cell(200, 10, "Relatorio de Diagnostico Fiscal - Calcados", ln=True, align="C")
