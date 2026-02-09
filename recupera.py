@@ -66,13 +66,6 @@ empresa = st.sidebar.text_input("Nome da Empresa", value="Empresa Exemplo")
 cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
 st.title("Auditoria Para Recuperação de Créditos Tributários para Calçados - Recuperação de ICMS")
-
-# --- BOTÃO PARA ZERAR TUDO ---
-#st.sidebar.markdown("---")
-#if st.sidebar.button("♻️ Reiniciar Análise do Zero", use_container_width=True):
- #   for key in st.session_state.keys():
-#        del st.session_state[key]
- #   st.rerun()
     
 # --- 4. ESTRUTURA DE ABAS ---
 aba1, aba2, aba3 = st.tabs(["📥 XML´s Avulsos", "📊 XML´s de Excel/CSV", "📄 PGDAS & Relatório"])
