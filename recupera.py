@@ -2,56 +2,42 @@ import streamlit as st
 import pandas as pd
 import xml.etree.ElementTree as ET
 import plotly.express as px
-
 from fpdf import FPDF
 
+# --- FUNÇÃO PDF ---
 def gerar_pdf(empresa, base_xml, base_pgdas, diferenca, credito, aliquota):
     pdf = FPDF()
     pdf.add_page()
-    
-    # Cabeçalho
     pdf.set_font("Arial", "B", 16)
-    pdf.cell(200, 10, "Relatorio de Diagnostico Fiscal - Calçados", ln=True, align="C")
+    pdf.cell(200, 10, "Relatorio de Diagnostico Fiscal - Calcados", ln=True, align="C")
     pdf.ln(10)
-    
-    # Dados do Cliente
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, f"Empresa: {empresa}", ln=True)
     pdf.set_font("Arial", "", 12)
-    pdf.cell(0, 10, f"Analise: Recuperacao de ICMS (Simples Nacional)", ln=True)
+    pdf.cell(0, 10, "Analise: Recuperacao de ICMS (Simples Nacional)", ln=True)
     pdf.ln(5)
-    
-    # Tabela de Valores
     pdf.set_fill_color(240, 240, 240)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(100, 10, "Descricao", 1, 0, "L", True)
     pdf.cell(90, 10, "Valor (R$)", 1, 1, "C", True)
-    
     pdf.set_font("Arial", "", 12)
     pdf.cell(100, 10, "Faturamento Identificado (XML)", 1)
     pdf.cell(90, 10, f"{base_xml:,.2f}", 1, 1, "C")
-    
     pdf.cell(100, 10, "Faturamento Declarado (PGDAS)", 1)
     pdf.cell(90, 10, f"{base_pgdas:,.2f}", 1, 1, "C")
-    
     pdf.set_font("Arial", "B", 12)
     pdf.cell(100, 10, "Diferenca Omitida (ST)", 1)
     pdf.cell(90, 10, f"{diferenca:,.2f}", 1, 1, "C")
-    
     pdf.ln(10)
-    
-    # Resultado Final
     pdf.set_font("Arial", "B", 14)
     pdf.set_text_color(0, 128, 0)
     pdf.cell(0, 10, f"CREDITO ESTIMADO PARA RECUPERACAO: R$ {credito:,.2f}", ln=True)
-    
     pdf.set_font("Arial", "I", 10)
     pdf.set_text_color(0, 0, 0)
     pdf.multi_cell(0, 10, f"\nNota: Este calculo baseia-se na aliquota efetiva de {aliquota}% informada, aplicando o fator de 33,5% referente a parcela de ICMS do Simples Nacional.")
-    
     return pdf.output(dest="S").encode("latin-1")
 
-# Inicializa as variáveis de memória se elas não existirem
+# Inicializa variáveis
 if 'total_g1' not in st.session_state:
     st.session_state.total_g1 = 0.0
 if 'total_g2' not in st.session_state:
@@ -77,48 +63,44 @@ def check_password():
 if not check_password():
     st.stop()
 
-
-##########################################
-
 # --- 2. CONFIGURAÇÃO INICIAL ---
 st.set_page_config(page_title="Módulo 1: Extração e Importação", layout="wide")
 st.title("👞 Auditoria de Calçados - Grupo 1")
 
-# Criação de abas para organizar as duas formas de entrada
+# Nome da Empresa para o PDF
+empresa = st.sidebar.text_input("Nome do Cliente/Empresa", value="Empresa Exemplo")
+
 aba_xml, aba_excel, aba_pgdas = st.tabs(["📥 Processar XML´s Avulsos", "📊 Importar XML´s por Planilha (Excel/CSV)", "📄 PGDAS"])
 
 cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
-# --- ABA 1: PROCESSAMENTO DE XML (DRAG AND DROP) ---
+# --- ABA 1: XML ---
 with aba_xml:
     st.markdown("### Leitura Direta de Arquivos XML")
     arquivos = st.file_uploader("Arraste os XMLs aqui", accept_multiple_files=True, type=['xml'], key="xml_up")
-
     lista_final = []
     if arquivos:
+        soma_temp = 0.0
         for arquivo in arquivos:
             try:
                 tree = ET.parse(arquivo)
                 root = tree.getroot()
                 ns = {'ns': 'http://www.portalfiscal.inf.br/nfe'}
-                
                 n_nfe = root.find('.//ns:ide/ns:nNF', ns).text
                 data_emi = root.find('.//ns:ide/ns:dhEmi', ns).text[:10]
-                
                 for det in root.findall('.//ns:det', ns):
                     prod = det.find('ns:prod', ns)
                     imposto = det.find('ns:imposto', ns)
-                    
                     ncm = prod.find('ns:NCM', ns).text
                     cfop = prod.find('ns:CFOP', ns).text
                     v_prod = float(prod.find('ns:vProd', ns).text)
                     x_prod = prod.find('ns:xProd', ns).text
-                    
                     csosn = "N/A"
                     for sn in imposto.findall('.//ns:CSOSN', ns):
                         csosn = sn.text
-                    
                     tem_st = cfop in cfops_st
+                    if tem_st:
+                        soma_temp += v_prod
                     lista_final.append({
                         "Nota": n_nfe, "Data": data_emi, "Produto": x_prod,
                         "NCM": ncm, "CFOP": cfop, "CSOSN": csosn, "Valor": v_prod,
@@ -126,44 +108,32 @@ with aba_xml:
                     })
             except Exception as e:
                 st.error(f"Erro no XML {arquivo.name}: {e}")
+        st.session_state.total_g1 = soma_temp
 
-                st.session_state.total_g1 = soma_dos_valores
-
-# --- ABA 2: IMPORTAÇÃO DE EXCEL ---
+# --- ABA 2: EXCEL ---
 with aba_excel:
     st.markdown("### Importar Relatório de Itens (ERP)")
-    st.info("A planilha deve conter colunas com nomes similares a: NCM, CFOP, Valor e CSOSN.")
     arquivo_planilha = st.file_uploader("Upload Excel ou CSV", type=['xlsx', 'csv'], key="excel_up")
-
     if arquivo_planilha:
         try:
-            if arquivo_planilha.name.endswith('.csv'):
-                df_importado = pd.read_csv(arquivo_planilha)
-            else:
-                df_importado = pd.read_excel(arquivo_planilha)
-            
-            # Padronização básica das colunas para o motor de auditoria
+            df_importado = pd.read_csv(arquivo_planilha) if arquivo_planilha.name.endswith('.csv') else pd.read_excel(arquivo_planilha)
             df_importado.columns = [c.upper() for c in df_importado.columns]
-            
-            # Criando a coluna de Operação ST baseada no CFOP importado
             if 'CFOP' in df_importado.columns:
                 df_importado['CFOP'] = df_importado['CFOP'].astype(str).str.replace('.0', '', regex=False)
                 df_importado['Operação ST?'] = df_importado['CFOP'].apply(lambda x: "Sim" if x in cfops_st else "Não")
-                
+            
+            valor_col = 'VALOR' if 'VALOR' in df_importado.columns else 'Valor'
+            if valor_col in df_importado.columns:
+                st.session_state.total_g2 = df_importado[df_importado["Operação ST?"] == "Sim"][valor_col].sum()
+            
             lista_final = df_importado.to_dict('records')
             st.success("Planilha importada com sucesso!")
         except Exception as e:
             st.error(f"Erro ao ler planilha: {e}")
-            
-            st.session_state.total_g2 = soma_dos_valores
 
-#####################################
-
-# --- ABA 3: CONFRONTO COM O PGDAS ---
+# --- ABA 3: PGDAS ---
 with aba_pgdas:
     st.header("📊 Cálculo de Recuperação Tributária")
-    
-    # Verificação de segurança: Só calcula se houver dados nas abas anteriores
     g1_disponivel = st.session_state.get('total_g1', 0.0)
     g2_disponivel = st.session_state.get('total_g2', 0.0)
 
@@ -171,77 +141,43 @@ with aba_pgdas:
         st.warning("⚠️ Nenhum dado de XML foi processado nas Abas 1 ou 2 ainda.")
     else:
         with st.container(border=True):
-            st.markdown("### 📝 Dados do Confronto")
-            
-            # 1. Seleção da Base de Cálculo
             origem = st.radio("Qual base de XML deseja utilizar?", ["Grupo 1", "Grupo 2"], horizontal=True)
             base_escolhida = g1_disponivel if origem == "Grupo 1" else g2_disponivel
-            
             st.info(f"Base de XML selecionada ({origem}): **R$ {base_escolhida:,.2f}**")
-
-            # 2. Entrada de dados manuais (PGDAS)
             col1, col2 = st.columns(2)
             valor_pgdas_st = col1.number_input("Valor de ST já declarado no PGDAS (R$)", min_value=0.0, format="%.2f")
             aliquota_simples = col2.number_input("Alíquota Efetiva do Simples (%)", min_value=0.0, value=8.5, step=0.1)
 
-        # 3. O CÁLCULO (A regra CEA)
         if st.button("🚀 Calcular Crédito Recuperável"):
             diferenca_base = base_escolhida - valor_pgdas_st
-            
             if diferenca_base > 0:
-                # Cálculo: (Base Escondida * Alíquota Simples) * 33.5% (Fatia ICMS)
-                # Usando LaTeX para formalizar a ciência por trás do cálculo
                 st.latex(r"Crédito = (Base_{XML} - Base_{PGDAS}) \cdot \frac{Alíquota}{100} \cdot 0.335")
-                
                 credito_final = (diferenca_base * (aliquota_simples / 100)) * 0.335
-                
-                # Exibição do Resultado Estilizado
                 st.markdown("---")
                 c1, c2 = st.columns(2)
                 c1.metric("Diferença de Faturamento ST", f"R$ {diferenca_base:,.2f}")
                 c2.metric("Crédito de ICMS Estimado", f"R$ {credito_final:,.2f}", delta="Recuperável")
-                
                 st.success(f"💰 O valor estimado para recuperação é de **R$ {credito_final:,.2f}**")
                 st.balloons()
+                
+                pdf_data = gerar_pdf(empresa, base_escolhida, valor_pgdas_st, diferenca_base, credito_final, aliquota_simples)
+                st.download_button(label="📥 Baixar Relatório em PDF", data=pdf_data, file_name=f"Relatorio_{empresa}.pdf", mime="application/pdf")
             else:
-                st.error("❌ A base declarada no PGDAS é maior ou igual aos XMLs. Não há crédito identificado.")
-                # ... (abaixo do st.balloons())
-                
-                pdf_data = gerar_pdf(
-                    empresa, 
-                    base_escolhida, 
-                    valor_pgdas_st, 
-                    diferenca_base, 
-                    credito_final, 
-                    aliquota_simples
-                )
-                
-                st.download_button(
-                    label="📥 Baixar Relatório em PDF",
-                    data=pdf_data,
-                    file_name=f"Relatorio_Auditoria_{empresa}.pdf",
-                    mime="application/pdf"
-                )
-            
-#################################################################
+                st.error("❌ A base declarada no PGDAS é maior ou igual aos XMLs.")
 
-# --- EXIBIÇÃO CONSOLIDADA DOS RESULTADOS ---
+# --- RESULTADOS CONSOLIDADOS ---
 st.markdown("---")
 if lista_final:
     df = pd.DataFrame(lista_final)
-    
-    # Filtro opcional: Mostrar apenas o que é calçado (NCM começa com 64)
     if 'NCM' in df.columns:
         df['NCM'] = df['NCM'].astype(str)
         df['Calçado?'] = df['NCM'].apply(lambda x: "Sim" if x.startswith('64') else "Não")
-
     st.subheader("📋 Relatório Consolidado para Auditoria")
     st.dataframe(df, use_container_width=True)
-    
-    total_st = df[df["Operação ST?"] == "Sim"]["VALOR"].sum() if "VALOR" in df.columns else df[df["Operação ST?"] == "Sim"]["Valor"].sum()
+    val_col = 'VALOR' if 'VALOR' in df.columns else 'Valor'
+    total_st = df[df["Operação ST?"] == "Sim"][val_col].sum()
     st.success(f"**Total identificado com ST nesta carga:** R$ {total_st:,.2f}")
-    
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("Exportar Resultado Final", csv, "auditoria_consolidada.csv", "text/csv")
 else:
-    st.warning("Nenhum dado carregado via XML ou Planilha.")
+    st.warning("Aguardando upload dos arquivos.")
