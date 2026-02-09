@@ -81,16 +81,9 @@ if st.sidebar.button("♻️ Reiniciar Análise", use_container_width=True):
 #####################################
 cfops_st = ['5401', '5402', '5403', '5405', '6401', '6403', '6404']
 
-#st.title("Auditoria Para Recuperação de Créditos Tributários para Calçados - Recuperação de ICMS")
-with st.container():
-    st.markdown("""
-        <style>
-        .main-title { color: #1E3A8A; font-weight: bold; font-size: 32px; }
-        .sub-title { color: #64748B; font-size: 18px; margin-bottom: 20px; }
-        </style>
-        """, unsafe_base_url=True)
-    st.markdown('<p class="main-title">👟 Auditoria Fiscal Inteligente</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-title">Recuperação de Créditos de ICMS-ST para o Setor de Calçados</p>', unsafe_allow_html=True)
+st.title("Auditoria Para Recuperação de Créditos Tributários para Calçados - Recuperação de ICMS")
+
+
     
 # --- 4. ESTRUTURA DE ABAS ---
 aba1, aba2, aba3 = st.tabs(["📥 XML´s Avulsos", "📊 XML´s de Excel/CSV", "📄 PGDAS & Relatório"])
