@@ -170,14 +170,15 @@ if st.session_state.get('calculo_realizado') and st.session_state.get('res_final
     c2.metric("Alíquota ICMS", "33.5% (do Simples)")
     c3.metric("Crédito Estimado", f"R$ {valor_cred:,.2f}")
         
-        # Gerar o PDF
-        pdf_bytes = gerar_pdf(empresa, res['base'], res['pgdas'], res['dif'], res['cred'], res['aliq'])        
-        st.download_button(
-            label="📥 Baixar Relatório em PDF",
-            data=pdf_bytes,
-            file_name=f"Relatorio_{empresa.replace(' ', '_')}.pdf",
-            mime="application/pdf"
-        )
+    # Gerar o PDF
+    pdf_bytes = gerar_pdf(empresa, res['base'], res['pgdas'], res['dif'], res['cred'], res['aliq'])        
+     st.download_button(
+         label="📥 Baixar Relatório em PDF",
+         data=pdf_bytes,
+          file_name=f"Relatorio_{empresa.replace(' ', '_')}.pdf",
+        mime="application/pdf"
+     )
+
 # --- BOTÃO TEMPORÁRIO PARA GERAR PLANILHA DE TESTE ---
 st.sidebar.markdown("---")
 if st.sidebar.button("🛠️ Gerar Planilha de Teste"):
