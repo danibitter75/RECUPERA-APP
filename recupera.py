@@ -120,7 +120,7 @@ with aba3:
     
     base_xml = st.radio("Selecione a base de cálculo:", 
                         [f"Grupo 1 (XMLs): R$ {st.session_state.total_g1:,.2f}", 
-                         f"Grupo 2 (Planilha): R$ {st.session_state.total_g2:,.2f}"])",
+                         f"Grupo 2 (Planilha): R$ {st.session_state.total_g2:,.2f}",
                          f"CONCILIADO (Soma Aba 1 + Aba 2): R$ {soma_conciliada:,.2f}"])
 
     # Lógica de seleção de valor base incluindo a soma
